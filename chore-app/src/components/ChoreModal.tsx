@@ -16,6 +16,8 @@ const defaultForm = (): Omit<Chore, 'id' | 'createdAt'> => ({
   description: '',
   assigneeId: null,
   startDate: new Date().toISOString().split('T')[0],
+  startTime: null,
+  endTime: null,
   endDate: null,
   isRecurring: false,
   recurrenceType: null,
@@ -25,7 +27,14 @@ const defaultForm = (): Omit<Chore, 'id' | 'createdAt'> => ({
 
 export default function ChoreModal({ chore, members, onSave, onClose }: Props) {
   const [form, setForm] = useState<Omit<Chore, 'id' | 'createdAt'>>(
-    chore ? { ...chore } : defaultForm()
+    chore
+      ? {
+          ...defaultForm(),
+          ...chore,
+          startTime: chore.startTime ?? null,
+          endTime: chore.endTime ?? null,
+        }
+      : defaultForm()
   );
 
   useEffect(() => {
@@ -102,6 +111,27 @@ export default function ChoreModal({ chore, members, onSave, onClose }: Props) {
                 value={form.startDate}
                 onChange={e => set('startDate', e.target.value)}
                 required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+              <input
+                type="time"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={form.startTime || ''}
+                onChange={e => set('startTime', e.target.value || null)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Time (optional)</label>
+              <input
+                type="time"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={form.endTime || ''}
+                onChange={e => set('endTime', e.target.value || null)}
               />
             </div>
           </div>

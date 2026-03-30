@@ -14,6 +14,8 @@ export interface Chore {
   description: string;
   assigneeId: string | null;
   startDate: string; // ISO date YYYY-MM-DD
+  startTime?: string | null; // HH:mm (24-hour) - optional for all-day chores
+  endTime?: string | null; // HH:mm (24-hour)
   endDate: string | null;
   isRecurring: boolean;
   recurrenceType: RecurrenceType;
