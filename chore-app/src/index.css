@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.fc .fc-toolbar-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.fc .fc-button {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+.fc .fc-button:hover {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+.fc .fc-button-active {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+.fc-event {
+  cursor: pointer;
+}

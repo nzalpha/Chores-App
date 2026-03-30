@@ -1,0 +1,11 @@
+{
+  "smtp": {
+    "host": "smtp.example.com",
+    "port": 587,
+    "secure": false,
+    "user": "your@email.com",
+    "pass": "your-password"
+  },
+  "from": "Office Chores <your@email.com>",
+  "dataFile": "./chores-export.json"
+}

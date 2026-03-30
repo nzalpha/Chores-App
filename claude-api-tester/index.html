@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tone Modifier — Powered by Claude</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0c0c0e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid #1e1e24;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+    .logo span { color: #a78bfa; }
+    .api-key-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .api-key-wrap label { font-size: 0.75rem; color: #666; white-space: nowrap; }
+    .api-key-wrap input {
+      background: #161618;
+      border: 1px solid #2a2a30;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      outline: none;
+      width: 260px;
+      font-family: monospace;
+    }
+    .api-key-wrap input:focus { border-color: #444; }
+
+    /* Main layout */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px;
+      gap: 32px;
+    }
+
+    .hero { text-align: center; }
+    .hero h1 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 8px; letter-spacing: -0.03em; }
+    .hero p { color: #666; font-size: 0.95rem; }
+
+    /* Tone pills */
+    .tone-section { width: 100%; max-width: 760px; }
+    .tone-section h2 { font-size: 0.75rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+    .tone-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tone-pill {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid #2a2a30;
+      background: #161618;
+      color: #aaa;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .tone-pill:hover { border-color: #444; color: #ddd; }
+    .tone-pill.active {
+      background: #3b1fa8;
+      border-color: #6d47e0;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    /* Editor */
+    .editor {
+      width: 100%;
+      max-width: 760px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .editor { grid-template-columns: 1fr; } }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .panel-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    textarea {
+      background: #161618;
+      border: 1px solid #2a2a30;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      padding: 16px;
+      resize: none;
+      outline: none;
+      min-height: 240px;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    textarea:focus { border-color: #444; }
+    #outputText {
+      background: #101014;
+      color: #c4b5fd;
+      cursor: default;
+      position: relative;
+    }
+    #outputText.loading { color: #444; font-style: italic; }
+
+    /* Action row */
+    .actions {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-primary {
+      background: #6d47e0;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 28px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: #5a38c4; }
+    .btn-primary:disabled { background: #2a2a30; color: #555; cursor: not-allowed; }
+
+    .btn-copy {
+      background: #1e1e24;
+      color: #aaa;
+      border: 1px solid #2a2a30;
+      border-radius: 8px;
+      padding: 11px 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-copy:hover { background: #2a2a30; color: #fff; }
+    .btn-copy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status-msg {
+      font-size: 0.8rem;
+      margin-left: auto;
+    }
+    .status-msg.error { color: #f87171; }
+    .status-msg.success { color: #4ade80; }
+    .status-msg.info { color: #a78bfa; }
+
+    .btn-stress {
+      background: #1a1a1a;
+      color: #fb923c;
+      border: 1px solid #7c2d12;
+      border-radius: 8px;
+      padding: 11px 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-stress:hover { background: #2a1a0a; }
+    .btn-stress:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .req-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .req-200 { background: #052e16; color: #4ade80; }
+    .req-429 { background: #7c2d12; color: #fb923c; }
+    .req-err { background: #1c0202; color: #f87171; }
+    .req-pending { background: #1e1e24; color: #555; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #444;
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">Tone<span>Shift</span></div>
+    <div class="api-key-wrap">
+      <label for="modelSelect">Model</label>
+      <select id="modelSelect" style="background:#161618;border:1px solid #2a2a30;border-radius:6px;color:#ccc;font-size:0.8rem;padding:6px 10px;outline:none;">
+        <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 (cheapest)</option>
+        <option value="claude-3-5-haiku-20241022">claude-3-5-haiku-20241022</option>
+        <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+        <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet-20241022</option>
+        <option value="claude-opus-4-6">claude-opus-4-6</option>
+        <option value="claude-3-opus-20240229">claude-3-opus-20240229</option>
+      </select>
+      <label for="apiKey" style="margin-left:8px;">API Key</label>
+      <input id="apiKey" type="password" placeholder="sk-ant-api03-…" />
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Rewrite in any tone</h1>
+      <p>Paste your text, pick a tone, and let Claude do the rest.</p>
+    </div>
+
+    <div class="tone-section">
+      <h2>Select tone</h2>
+      <div class="tone-grid" id="toneGrid">
+        <div class="tone-pill active" data-tone="Professional">Professional</div>
+        <div class="tone-pill" data-tone="Casual">Casual</div>
+        <div class="tone-pill" data-tone="Formal">Formal</div>
+        <div class="tone-pill" data-tone="Friendly">Friendly</div>
+        <div class="tone-pill" data-tone="Persuasive">Persuasive</div>
+        <div class="tone-pill" data-tone="Empathetic">Empathetic</div>
+        <div class="tone-pill" data-tone="Concise">Concise</div>
+        <div class="tone-pill" data-tone="Humorous">Humorous</div>
+        <div class="tone-pill" data-tone="Academic">Academic</div>
+        <div class="tone-pill" data-tone="Assertive">Assertive</div>
+      </div>
+    </div>
+
+    <div class="editor">
+      <div class="panel">
+        <div class="panel-label">Original text</div>
+        <textarea id="inputText" placeholder="Paste or type your text here…"></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-label">Modified text</div>
+        <textarea id="outputText" readonly placeholder="Your rewritten text will appear here…"></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="rewriteBtn" onclick="rewrite()">Rewrite</button>
+      <button class="btn-copy" id="copyBtn" onclick="copyOutput()" disabled>Copy</button>
+      <button class="btn-stress" id="stressBtn" onclick="stressTest()" title="Fires 60 concurrent requests to trigger the 429 rate limit">⚡ Trigger 429</button>
+      <span class="status-msg" id="statusMsg"></span>
+    </div>
+
+    <!-- Stress test results -->
+    <div id="stressResults" style="display:none;width:100%;max-width:760px;">
+      <div style="font-size:0.75rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Stress Test Results</div>
+      <div id="stressGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+      <div id="stressSummary" style="font-size:0.85rem;color:#aaa;"></div>
+    </div>
+  </main>
+
+  <script>
+    let selectedTone = 'Professional';
+
+    // Tone pill selection
+    document.getElementById('toneGrid').addEventListener('click', e => {
+      const pill = e.target.closest('.tone-pill');
+      if (!pill) return;
+      document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedTone = pill.dataset.tone;
+    });
+
+    function setStatus(msg, type = 'info') {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg;
+      el.className = 'status-msg ' + type;
+    }
+
+    async function rewrite() {
+      const key = document.getElementById('apiKey').value.trim();
+      const input = document.getElementById('inputText').value.trim();
+      const btn = document.getElementById('rewriteBtn');
+      const output = document.getElementById('outputText');
+
+      if (!key) { setStatus('Enter your API key in the top right.', 'error'); return; }
+      if (!input) { setStatus('Paste some text to rewrite.', 'error'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Rewriting…';
+      output.value = '';
+      output.classList.add('loading');
+      output.placeholder = 'Rewriting…';
+      document.getElementById('copyBtn').disabled = true;
+      setStatus('');
+
+      const prompt = `Rewrite the following text in a ${selectedTone} tone. Preserve the original meaning. Return only the rewritten text — no explanations, no labels, no quotes.\n\nText:\n${input}`;
+
+      let status, data;
+      try {
+        const res = await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'x-api-key': key, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            model: document.getElementById('modelSelect').value,
+            max_tokens: 1024,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        });
+        status = res.status;
+        data = await res.json();
+      } catch (err) {
+        setStatus('Network error: ' + err.message, 'error');
+        reset(btn, output);
+        return;
+      }
+
+      output.classList.remove('loading');
+      output.placeholder = 'Your rewritten text will appear here…';
+
+      if (status === 200) {
+        const text = data.content?.[0]?.text ?? '';
+        output.value = text;
+        document.getElementById('copyBtn').disabled = false;
+        setStatus(`Done — rewritten in ${selectedTone} tone`, 'success');
+      } else if (status === 429) {
+        setStatus('429: Rate limit hit. Wait a moment and try again.', 'error');
+      } else if (status === 400 && data?.error?.message?.includes('credit')) {
+        setStatus('No credits — add billing at console.anthropic.com', 'error');
+      } else if (status === 401) {
+        setStatus('Invalid API key.', 'error');
+      } else {
+        setStatus(`Error ${status}: ${data?.error?.message ?? 'Unknown error'}`, 'error');
+      }
+
+      reset(btn, output);
+    }
+
+    function reset(btn, output) {
+      btn.disabled = false;
+      btn.innerHTML = 'Rewrite';
+    }
+
+    async function copyOutput() {
+      const text = document.getElementById('outputText').value;
+      if (!text) return;
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    }
+
+    async function stressTest() {
+      const key = document.getElementById('apiKey').value.trim();
+      if (!key) { setStatus('Enter your API key first.', 'error'); return; }
+
+      const COUNT = 60; // fires 60 requests simultaneously — exceeds the 50 RPM limit
+      const model = document.getElementById('modelSelect').value;
+      const btn = document.getElementById('stressBtn');
+      const grid = document.getElementById('stressGrid');
+      const summary = document.getElementById('stressSummary');
+      const resultsDiv = document.getElementById('stressResults');
+
+      btn.disabled = true;
+      btn.textContent = 'Running…';
+      resultsDiv.style.display = 'block';
+      setStatus(`Firing ${COUNT} concurrent requests…`, 'info');
+
+      // Build badge placeholders
+      grid.innerHTML = '';
+      const badges = [];
+      for (let i = 0; i < COUNT; i++) {
+        const b = document.createElement('div');
+        b.className = 'req-badge req-pending';
+        b.textContent = i + 1;
+        b.title = 'Pending';
+        grid.appendChild(b);
+        badges.push(b);
+      }
+
+      const sendOne = async (i) => {
+        try {
+          const res = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': key, 'content-type': 'application/json' },
+            body: JSON.stringify({
+              model,
+              max_tokens: 10,
+              messages: [{ role: 'user', content: `Say the number ${i}` }],
+            }),
+          });
+          const status = res.status;
+          badges[i].textContent = status;
+          badges[i].title = `Request ${i + 1}: HTTP ${status}`;
+          if (status === 200) badges[i].className = 'req-badge req-200';
+          else if (status === 429) badges[i].className = 'req-badge req-429';
+          else badges[i].className = 'req-badge req-err';
+          return status;
+        } catch {
+          badges[i].textContent = 'ERR';
+          badges[i].className = 'req-badge req-err';
+          return 0;
+        }
+      };
+
+      const results = await Promise.all(Array.from({ length: COUNT }, (_, i) => sendOne(i)));
+
+      const count200 = results.filter(s => s === 200).length;
+      const count429 = results.filter(s => s === 429).length;
+      const countErr = results.filter(s => s !== 200 && s !== 429).length;
+
+      if (count429 > 0) {
+        summary.innerHTML = `<span style="color:#fb923c;font-weight:700">${count429} × 429 rate limit hit</span> &nbsp;|&nbsp; ${count200} × 200 success &nbsp;|&nbsp; ${countErr} × other errors`;
+        setStatus(`429 triggered! ${count429} requests were rate-limited.`, 'error');
+      } else {
+        summary.innerHTML = `${count200} × 200 success &nbsp;|&nbsp; ${countErr} × other errors — no 429 yet, try again`;
+        setStatus('No 429 yet — all requests succeeded. Try again immediately.', 'info');
+      }
+
+      btn.disabled = false;
+      btn.textContent = '⚡ Trigger 429';
+    }
+
+    // Keyboard shortcut: Cmd/Ctrl + Enter to rewrite
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') rewrite();
+    });
+  </script>
+</body>
+</html>
